@@ -1,3 +1,4 @@
+import { adminRouter } from "./routes/admin/index.js";
 import { startEmailWorker } from "./jobs/emailWorker.js";
 import express from "express";
 import helmet from "helmet";
@@ -36,7 +37,7 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, data: { status: "up", env: env.NODE_ENV, time: new Date().toISOString() } });
 });
 
-app.use("/api/admin/auth", authRouter);
+app.use("/api/admin", adminRouter);
 app.use("/api", publicRouter);
 
 app.use(notFound);
