@@ -1,0 +1,293 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AdminUser {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         String    @default("ADMIN")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  sessions     Session[]
+  resetTokens  PasswordResetToken[]
+  auditLogs    AuditLog[]
+}
+
+model Session {
+  id        String    @id @default(uuid())
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  user      AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  @@index([userId])
+}
+
+model Profile {
+  id         String   @id @default("singleton")
+  fullName   String   @default("Niyonizeye Dieu Aime")
+  headline   String   @default("Full-Stack Software Developer")
+  bio        String   @default("")
+  avatarUrl  String?
+  resumeUrl  String?
+  phone      String   @default("+250790382205")
+  email      String   @default("dieuaime480@gmail.com")
+  location   String   @default("Rwanda")
+  whatsapp   String   @default("+250790382205")
+  mission    String   @default("")
+  philosophy String   @default("")
+  updatedAt  DateTime @updatedAt
+}
+
+model SocialLink {
+  id    String @id @default(uuid())
+  label String
+  url   String
+  icon  String
+  order Int    @default(0)
+}
+
+model SkillCategory {
+  id     String  @id @default(uuid())
+  name   String  @unique
+  order  Int     @default(0)
+  skills Skill[]
+}
+
+model Skill {
+  id          String        @id @default(uuid())
+  name        String
+  description String?
+  proficiency String?
+  visible     Boolean       @default(true)
+  order       Int           @default(0)
+  categoryId  String
+  category    SkillCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  @@index([categoryId])
+}
+
+model ProjectCategory {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  slug     String    @unique
+  order    Int       @default(0)
+  projects Project[]
+}
+
+model Technology {
+  id       String              @id @default(uuid())
+  name     String              @unique
+  projects ProjectTechnology[]
+}
+
+model Project {
+  id             String          @id @default(uuid())
+  title          String
+  slug           String          @unique
+  description    String
+  features       String[]        @default([])
+  challenges     String?
+  solutions      String?
+  githubUrl      String?
+  liveUrl        String?
+  completedAt    DateTime?
+  featured       Boolean         @default(false)
+  published      Boolean         @default(false)
+  seoTitle       String?
+  seoDescription String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  categoryId     String
+  category       ProjectCategory @relation(fields: [categoryId], references: [id])
+  images         ProjectImage[]
+  technologies   ProjectTechnology[]
+  @@index([categoryId])
+  @@index([published, featured])
+}
+
+model ProjectImage {
+  id        String  @id @default(uuid())
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  url       String
+  alt       String
+  order     Int     @default(0)
+  isCover   Boolean @default(false)
+  @@index([projectId])
+}
+
+model ProjectTechnology {
+  projectId    String
+  technologyId String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+  @@id([projectId, technologyId])
+}
+
+model Service {
+  id           String           @id @default(uuid())
+model Service {
+  id           String           @id @default(uuid())
+  title        String
+  title        String
+  slug         String           @unique
+  description  String
+  deliverables String[]         @default([])
+  technologies String[]         @default([])
+  priceFrom    Int?
+  icon         String
+  visible      Boolean          @default(true)
+  order        Int              @default(0)
+  inquiries    ServiceInquiry[]
+}
+
+enum MessageStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+model ContactMessage {
+  id        String        @id @default(uuid())
+  fullName  String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  status    MessageStatus @default(NEW)
+  ipHash    String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  @@index([status, createdAt])
+}
+
+model ServiceInquiry {
+  id        String        @id @default(uuid())
+  fullName  String
+  email     String
+  message   String
+  status    MessageStatus @default(NEW)
+  serviceId String
+  service   Service       @relation(fields: [serviceId], references: [id])
+  createdAt DateTime      @default(now())
+  @@index([serviceId, status])
+}
+
+model BlogCategory {
+  id    String     @id @default(uuid())
+  name  String     @unique
+  slug  String     @unique
+  posts BlogPost[]
+}
+
+model BlogTag {
+  id    String        @id @default(uuid())
+  name  String        @unique
+  slug  String        @unique
+  posts BlogPostTag[]
+}
+
+model BlogPost {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  excerpt     String
+  content     String
+  coverUrl    String?
+  published   Boolean       @default(false)
+  featured    Boolean       @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  categoryId  String?
+  category    BlogCategory? @relation(fields: [categoryId], references: [id])
+  tags        BlogPostTag[]
+  @@index([published, publishedAt])
+}
+
+model BlogPostTag {
+  postId String
+  tagId  String
+  post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  @@id([postId, tagId])
+}
+
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Experience {
+  id           String    @id @default(uuid())
+  title        String
+  organization String
+  startDate    DateTime
+  endDate      DateTime?
+  description  String
+  order        Int       @default(0)
+}
+
+model Education {
+  id          String    @id @default(uuid())
+  institution String
+  degree      String
+  startDate   DateTime
+  endDate     DateTime?
+  description String?
+  order       Int       @default(0)
+}
+
+model Certification {
+  id       String   @id @default(uuid())
+  name     String
+  issuer   String
+  issuedAt DateTime
+  url      String?
+}
+
+model AuditLog {
+  id         String     @id @default(uuid())
+  userId     String?
+  user       AdminUser? @relation(fields: [userId], references: [id])
+  action     String
+  resource   String
+  resourceId String?
+  ipHash     String?
+  metadata   Json?
+  createdAt  DateTime   @default(now())
+  @@index([userId, createdAt])
+}
+
+model EmailNotification {
+  id        String   @id @default(uuid())
+  to        String
+  subject   String
+  body      String
+  status    String   @default("PENDING")
+  attempts  Int      @default(0)
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([status])
+}

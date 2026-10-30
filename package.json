@@ -1,0 +1,19 @@
+{
+  "name": "developer-portfolio",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "db:migrate": "pnpm --filter api prisma migrate dev",
+    "db:deploy": "pnpm --filter api prisma migrate deploy",
+    "db:seed-admin": "pnpm --filter api tsx scripts/create-admin.ts",
+    "db:studio": "pnpm --filter api prisma studio"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  }
+}

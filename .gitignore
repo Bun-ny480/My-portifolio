@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+apps/api/uploads/*
+!apps/api/uploads/.gitkeep
+apps/api/prisma/migrations/.tmp/
+.DS_Store
+coverage/
+playwright-report/
+*.tsbuildinfo
