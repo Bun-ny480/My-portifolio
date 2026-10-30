@@ -1,3 +1,4 @@
+import { startEmailWorker } from "./jobs/emailWorker.js";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -44,9 +45,11 @@ app.use(errorHandler);
 const server = app.listen(env.API_PORT, () => {
   logger.info(`API listening on http://localhost:${env.API_PORT}`);
 });
+const stopEmailWorker = startEmailWorker();
 
 const shutdown = (signal: string) => {
   logger.info({ signal }, "shutting down");
+  stopEmailWorker();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(1), 10_000).unref();
 };
