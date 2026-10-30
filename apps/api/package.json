@@ -7,7 +7,9 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "prisma": "prisma"
+    "prisma": "prisma",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:reset": "prisma migrate reset --force"
   },
   "dependencies": {
     "@portfolio/shared": "workspace:*",
@@ -45,5 +47,8 @@
     "tsx": "^4.10.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }

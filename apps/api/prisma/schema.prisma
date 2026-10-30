@@ -144,9 +144,6 @@ model ProjectTechnology {
 
 model Service {
   id           String           @id @default(uuid())
-model Service {
-  id           String           @id @default(uuid())
-  title        String
   title        String
   slug         String           @unique
   description  String
