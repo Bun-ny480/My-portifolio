@@ -50,7 +50,7 @@ export async function uploadFile(file: File): Promise<{ url: string; size: numbe
   return (body as ApiOk<{ url: string; size: number; name: string }>).data;
 }
 
-/* ---------- typed endpoint helpers ---------- */
+/* ---------- public API types ---------- */
 export type Profile = {
   fullName: string;
   headline: string;
@@ -64,23 +64,79 @@ export type Profile = {
   avatarUrl: string | null;
   resumeUrl: string | null;
 };
+
 export type Social = { id: string; label: string; url: string; icon: string; order: number };
 export type Skill = { id: string; name: string; description: string | null; proficiency: string | null };
 export type SkillCategory = { id: string; name: string; order: number; skills: Skill[] };
 export type Technology = { name: string };
 export type ProjectImage = { url: string; alt: string; isCover: boolean };
 export type ProjectCard = {
-  id: string; title: string; slug: string; description: string;
-  featured: boolean; completedAt: string | null;
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  featured: boolean;
+  completedAt: string | null;
   category: { name: string; slug: string } | null;
   images: ProjectImage[];
   technologies: { technology: Technology }[];
 };
+export type ProjectFull = ProjectCard & {
+  features: string[];
+  challenges: string | null;
+  solutions: string | null;
+  githubUrl: string | null;
+  liveUrl: string | null;
+};
 export type Service = {
-  id: string; title: string; slug: string; description: string;
-  deliverables: string[]; technologies: string[]; priceFrom: number | null; icon: string;
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  deliverables: string[];
+  technologies: string[];
+  priceFrom: number | null;
+  icon: string;
+};
+export type BlogPostCard = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  coverUrl: string | null;
+  publishedAt: string | null;
+  featured: boolean;
+  category: { name: string; slug: string } | null;
+};
+export type BlogPostFull = BlogPostCard & {
+  content: string;
+  tags: { tag: { name: string; slug: string } }[];
+};
+export type Experience = {
+  id: string;
+  title: string;
+  organization: string;
+  startDate: string;
+  endDate: string | null;
+  description: string;
+};
+export type Education = {
+  id: string;
+  institution: string;
+  degree: string;
+  startDate: string;
+  endDate: string | null;
+  description: string | null;
+};
+export type Certification = {
+  id: string;
+  name: string;
+  issuer: string;
+  issuedAt: string;
+  url: string | null;
 };
 
+/* ---------- typed endpoint helpers ---------- */
 export const publicApi = {
   profile: () => api.get<{ profile: Profile | null; socials: Social[] }>("/api/profile"),
   skills: () => api.get<SkillCategory[]>("/api/skills"),
@@ -93,8 +149,27 @@ export const publicApi = {
     const suffix = qs.toString() ? `?${qs}` : "";
     return api.get<ProjectCard[]>(`/api/projects${suffix}`);
   },
-  project: (slug: string) => api.get<ProjectCard & { features: string[]; challenges: string | null; solutions: string | null; githubUrl: string | null; liveUrl: string | null }>(`/api/projects/${slug}`),
+  project: (slug: string) => api.get<ProjectFull>(`/api/projects/${slug}`),
   services: () => api.get<Service[]>("/api/services"),
-  contact: (payload: { fullName: string; email: string; phone?: string; subject: string; message: string; website?: string }) =>
-    api.post<{ id: string | null; message: string }>("/api/contact", payload),
+  blog: (params?: { page?: number; limit?: number; category?: string; tag?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set("page", String(params.page));
+    if (params?.limit) qs.set("limit", String(params.limit));
+    if (params?.category) qs.set("category", params.category);
+    if (params?.tag) qs.set("tag", params.tag);
+    const suffix = qs.toString() ? `?${qs}` : "";
+    return api.get<BlogPostCard[]>(`/api/blog${suffix}`);
+  },
+  blogPost: (slug: string) => api.get<BlogPostFull>(`/api/blog/${slug}`),
+  experience: () => api.get<Experience[]>("/api/experience"),
+  education: () => api.get<Education[]>("/api/education"),
+  certifications: () => api.get<Certification[]>("/api/certifications"),
+  contact: (payload: {
+    fullName: string;
+    email: string;
+    phone?: string;
+    subject: string;
+    message: string;
+    website?: string;
+  }) => api.post<{ id: string | null; message: string }>("/api/contact", payload),
 };
