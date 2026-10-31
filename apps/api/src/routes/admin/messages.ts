@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { z } from "zod";
-import { MessageStatus } from "@prisma/client";
 import { prisma } from "../../config/prisma.js";
 import { ok, fail } from "../../utils/http.js";
 import { requireAuth } from "../../middleware/auth.js";
@@ -8,8 +7,11 @@ import { requireAuth } from "../../middleware/auth.js";
 export const adminMessagesRouter = Router();
 adminMessagesRouter.use(requireAuth);
 
+const MESSAGE_STATUSES = ["NEW", "READ", "REPLIED", "ARCHIVED"] as const;
+type MessageStatusValue = (typeof MESSAGE_STATUSES)[number];
+
 const statusSchema = z.object({
-  status: z.nativeEnum(MessageStatus),
+  status: z.enum(MESSAGE_STATUSES),
 });
 
 /* ==================== CONTACT MESSAGES ==================== */
@@ -21,8 +23,8 @@ adminMessagesRouter.get("/contact", async (req, res, next) => {
     const q = String(req.query.q ?? "").trim().slice(0, 100);
 
     const where = {
-      ...(statusParam && Object.values(MessageStatus).includes(statusParam as MessageStatus)
-        ? { status: statusParam as MessageStatus }
+      ...(statusParam && MESSAGE_STATUSES.includes(statusParam as MessageStatusValue)
+        ? { status: statusParam as MessageStatusValue }
         : {}),
       ...(q
         ? {
@@ -80,8 +82,8 @@ adminMessagesRouter.get("/inquiries", async (req, res, next) => {
     const take = Math.min(100, Number.parseInt(String(req.query.limit ?? "20"), 10) || 20);
     const statusParam = req.query.status ? String(req.query.status) : undefined;
 
-    const where = statusParam && Object.values(MessageStatus).includes(statusParam as MessageStatus)
-      ? { status: statusParam as MessageStatus }
+    const where = statusParam && MESSAGE_STATUSES.includes(statusParam as MessageStatusValue)
+      ? { status: statusParam as MessageStatusValue }
       : {};
 
     const [items, total] = await Promise.all([

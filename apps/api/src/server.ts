@@ -1,5 +1,3 @@
-import { adminRouter } from "./routes/admin/index.js";
-import { startEmailWorker } from "./jobs/emailWorker.js";
 import express from "express";
 import helmet from "helmet";
 import cors from "cors";
@@ -10,7 +8,9 @@ import { logger } from "./config/logger.js";
 import { sessionMiddleware } from "./config/session.js";
 import { publicRouter } from "./routes/public.js";
 import { authRouter } from "./routes/auth.js";
+import { adminRouter } from "./routes/admin/index.js";
 import { notFound, errorHandler } from "./middleware/error.js";
+import { startEmailWorker } from "./jobs/emailWorker.js";
 
 const app = express();
 
@@ -18,25 +18,23 @@ app.set("trust proxy", 1);
 app.disable("x-powered-by");
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
-
-app.use(
-  cors({
-    origin: env.CORS_ORIGINS,
-    credentials: true,
-  })
-);
-
+app.use(cors({ origin: env.CORS_ORIGINS, credentials: true }));
 app.use(pinoHttp({ logger, autoLogging: env.NODE_ENV !== "test" }));
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser(env.CSRF_SECRET));
 app.use(sessionMiddleware);
 
-// health check (no auth, no session write)
+// Serve uploaded files
+app.use("/uploads", express.static(env.UPLOAD_DIR, { maxAge: "7d" }));
+
+// Health check
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true, data: { status: "up", env: env.NODE_ENV, time: new Date().toISOString() } });
 });
 
+// Routes — auth router MUST be mounted before the admin router
+app.use("/api/admin/auth", authRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api", publicRouter);
 
@@ -46,6 +44,7 @@ app.use(errorHandler);
 const server = app.listen(env.API_PORT, () => {
   logger.info(`API listening on http://localhost:${env.API_PORT}`);
 });
+
 const stopEmailWorker = startEmailWorker();
 
 const shutdown = (signal: string) => {
