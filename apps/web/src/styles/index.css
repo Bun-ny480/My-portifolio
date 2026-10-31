@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+
+body {
+  background-color: theme("colors.bg");
+  color: theme("colors.fg");
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: theme("colors.accent"); }
+a:hover { text-decoration: underline; }
