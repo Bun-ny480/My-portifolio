@@ -1,3 +1,3 @@
-export * from "./auth";
-export * from "./contact";
-export * from "./project";
+export * from "./auth.js";
+export * from "./contact.js";
+export * from "./project.js";

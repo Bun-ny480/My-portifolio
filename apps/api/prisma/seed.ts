@@ -7,18 +7,32 @@ async function main() {
   /* ---------- Profile singleton ---------- */
   await prisma.profile.upsert({
     where: { id: "singleton" },
-    update: {},
-    create: {
-      id: "singleton",
-      fullName: "Niyonizeye Dieu Aime",
+    update: {
+      fullName: "Dieu Aime",
+      avatarUrl: "/profile.png",
       headline: "Full-Stack Software Developer",
       bio: "I build reliable web applications end-to-end — from database schema to polished UI.",
       email: "dieuaime480@gmail.com",
       phone: "+250790382205",
       whatsapp: "+250790382205",
       location: "Rwanda",
-      mission: "Ship software that people trust.",
-      philosophy: "Clarity in code, empathy in design.",
+      mission: "My mission is to use software engineering and digital creativity to transform real-world challenges into meaningful technological solutions.",
+      vision: "To contribute to a future where technology makes everyday activities more productive, connected, efficient, and accessible.",
+      philosophy: "Clarity in code, empathy in design, and a steady focus on the people who depend on the software.",
+    },
+    create: {
+      id: "singleton",
+      fullName: "Dieu Aime",
+      avatarUrl: "/profile.png",
+      headline: "Full-Stack Software Developer",
+      bio: "I build reliable web applications end-to-end — from database schema to polished UI.",
+      email: "dieuaime480@gmail.com",
+      phone: "+250790382205",
+      whatsapp: "+250790382205",
+      location: "Rwanda",
+      mission: "My mission is to use software engineering and digital creativity to transform real-world challenges into meaningful technological solutions.",
+      vision: "To contribute to a future where technology makes everyday activities more productive, connected, efficient, and accessible.",
+      philosophy: "Clarity in code, empathy in design, and a steady focus on the people who depend on the software.",
     },
   });
 
@@ -26,9 +40,11 @@ async function main() {
   await prisma.socialLink.deleteMany();
   await prisma.socialLink.createMany({
     data: [
-      { label: "GitHub",   url: "https://github.com/niyonizeye", icon: "github",   order: 1 },
-      { label: "LinkedIn", url: "https://linkedin.com/in/niyonizeye", icon: "linkedin", order: 2 },
-      { label: "Email",    url: "mailto:dieuaime480@gmail.com", icon: "mail",     order: 3 },
+      { label: "GitHub",    url: "https://github.com/Bun-ny480", icon: "github",    order: 1 },
+      { label: "LinkedIn", url: "https://www.linkedin.com/feed/", icon: "linkedin", order: 2 },
+      { label: "Instagram", url: "https://www.instagram.com/__b.a.v.a.r.d__/", icon: "instagram", order: 3 },
+      { label: "Facebook", url: "https://www.facebook.com", icon: "facebook", order: 4 },
+      { label: "Gmail",    url: "https://mail.google.com/mail/?view=cm&fs=1&to=dieuaime480@gmail.com", icon: "mail", order: 5 },
     ],
   });
 
@@ -181,7 +197,7 @@ async function main() {
       update: {},
       create: {
         email: adminEmail,
-        name: "Niyonizeye Dieu Aime",
+        name: "Dieu Aime",
         passwordHash: await hashPassword(adminPassword),
         role: "ADMIN",
       },

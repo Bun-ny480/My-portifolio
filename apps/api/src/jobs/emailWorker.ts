@@ -1,34 +1,13 @@
-import nodemailer, { type Transporter } from "nodemailer";
 import { prisma } from "../config/prisma.js";
-import { env } from "../config/env.js";
 import { logger } from "../config/logger.js";
+import { isEmailConfigured, sendEmail } from "../services/email.js";
 
 const MAX_ATTEMPTS = 5;
 const POLL_MS = 30_000;
 const BATCH = 20;
 
-let transporter: Transporter | null = null;
-
-function getTransporter(): Transporter | null {
-  if (transporter) return transporter;
-  if (!env.SMTP_HOST || !env.SMTP_PORT) {
-    return null;
-  }
-  transporter = nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_SECURE,
-    auth:
-      env.SMTP_USER && env.SMTP_PASS
-        ? { user: env.SMTP_USER, pass: env.SMTP_PASS }
-        : undefined,
-  });
-  return transporter;
-}
-
 async function processBatch() {
-  const tp = getTransporter();
-  if (!tp) {
+  if (!isEmailConfigured()) {
     return;
   }
 
@@ -41,11 +20,11 @@ async function processBatch() {
 
   for (const row of pending) {
     try {
-      await tp.sendMail({
-        from: env.SMTP_FROM ?? "no-reply@localhost",
+      await sendEmail({
         to: row.to,
         subject: row.subject,
         text: row.body,
+        replyTo: row.replyTo ?? undefined,
       });
       await prisma.emailNotification.update({
         where: { id: row.id },
@@ -66,8 +45,7 @@ async function processBatch() {
 }
 
 export function startEmailWorker() {
-  const tp = getTransporter();
-  if (!tp) {
+  if (!isEmailConfigured()) {
     logger.warn("SMTP not configured — email worker disabled");
     return () => {};
   }

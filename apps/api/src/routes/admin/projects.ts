@@ -169,6 +169,24 @@ adminProjectsRouter.post("/:id/images", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+adminProjectsRouter.patch("/:id/images/:imageId", async (req, res, next) => {
+  try {
+    z.object({ isCover: z.literal(true) }).strict().parse(req.body);
+    const { id: projectId, imageId } = req.params;
+
+    const image = await prisma.$transaction(async (tx) => {
+      const selected = await tx.projectImage.findFirst({ where: { id: imageId, projectId } });
+      if (!selected) return null;
+
+      await tx.projectImage.updateMany({ where: { projectId }, data: { isCover: false } });
+      return tx.projectImage.update({ where: { id: imageId }, data: { isCover: true } });
+    });
+
+    if (!image) return fail(res, 404, "NOT_FOUND", "Project image not found");
+    return ok(res, image);
+  } catch (e) { next(e); }
+});
+
 adminProjectsRouter.delete("/:id/images/:imageId", async (req, res, next) => {
   try {
     await prisma.projectImage.delete({ where: { id: req.params.imageId } });

@@ -60,6 +60,7 @@ export type Profile = {
   whatsapp: string;
   location: string;
   mission: string;
+  vision: string;
   philosophy: string;
   avatarUrl: string | null;
   resumeUrl: string | null;
@@ -136,6 +137,20 @@ export type Certification = {
   url: string | null;
 };
 
+export type MediaType = "NEWS" | "PROJECT" | "VIDEO" | "AUDIO" | "DOCUMENT" | "OTHER";
+export type MediaItem = {
+  id: string;
+  title: string;
+  description: string | null;
+  type: MediaType;
+  url: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  published: boolean;
+  createdAt: string;
+};
+
 /* ---------- typed endpoint helpers ---------- */
 export const publicApi = {
   profile: () => api.get<{ profile: Profile | null; socials: Social[] }>("/api/profile"),
@@ -164,6 +179,7 @@ export const publicApi = {
   experience: () => api.get<Experience[]>("/api/experience"),
   education: () => api.get<Education[]>("/api/education"),
   certifications: () => api.get<Certification[]>("/api/certifications"),
+  media: () => api.get<MediaItem[]>("/api/media"),
   contact: (payload: {
     fullName: string;
     email: string;
@@ -173,3 +189,21 @@ export const publicApi = {
     website?: string;
   }) => api.post<{ id: string | null; message: string }>("/api/contact", payload),
 };
+
+export async function uploadMediaFile(file: File, data: {
+  title: string;
+  description: string;
+  type: MediaType;
+  published: boolean;
+}): Promise<MediaItem> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("title", data.title);
+  form.append("description", data.description);
+  form.append("type", data.type);
+  form.append("published", String(data.published));
+  const res = await fetch("/api/admin/media", { method: "POST", credentials: "include", body: form });
+  const body = (await res.json()) as ApiResponse<MediaItem>;
+  if (!res.ok || body.ok === false) throw new Error((body as ApiErr).error.message);
+  return (body as ApiOk<MediaItem>).data;
+}

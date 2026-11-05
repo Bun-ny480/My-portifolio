@@ -3,6 +3,8 @@ import { z } from "zod";
 import { prisma } from "../../config/prisma.js";
 import { ok, fail } from "../../utils/http.js";
 import { requireAuth } from "../../middleware/auth.js";
+import { env } from "../../config/env.js";
+import { isEmailConfigured, sendEmail } from "../../services/email.js";
 
 export const adminMessagesRouter = Router();
 adminMessagesRouter.use(requireAuth);
@@ -13,6 +15,9 @@ type MessageStatusValue = (typeof MESSAGE_STATUSES)[number];
 const statusSchema = z.object({
   status: z.enum(MESSAGE_STATUSES),
 });
+const replySchema = z.object({
+  body: z.string().trim().min(1).max(5000),
+}).strict();
 
 /* ==================== CONTACT MESSAGES ==================== */
 adminMessagesRouter.get("/contact", async (req, res, next) => {
@@ -41,6 +46,7 @@ adminMessagesRouter.get("/contact", async (req, res, next) => {
       prisma.contactMessage.findMany({
         where, skip: (page - 1) * take, take,
         orderBy: { createdAt: "desc" },
+        include: { replies: { orderBy: { createdAt: "asc" } } },
       }),
       prisma.contactMessage.count({ where }),
     ]);
@@ -51,9 +57,44 @@ adminMessagesRouter.get("/contact", async (req, res, next) => {
 
 adminMessagesRouter.get("/contact/:id", async (req, res, next) => {
   try {
-    const msg = await prisma.contactMessage.findUnique({ where: { id: req.params.id } });
+    const msg = await prisma.contactMessage.findUnique({
+      where: { id: req.params.id },
+      include: { replies: { orderBy: { createdAt: "asc" } } },
+    });
     if (!msg) return fail(res, 404, "NOT_FOUND", "Message not found");
     ok(res, msg);
+  } catch (e) { next(e); }
+});
+
+adminMessagesRouter.post("/contact/:id/replies", async (req, res, next) => {
+  try {
+    const { body } = replySchema.parse(req.body);
+    if (!isEmailConfigured()) {
+      return fail(res, 503, "EMAIL_NOT_CONFIGURED", "Email delivery is not configured. Configure Gmail SMTP in the API environment.");
+    }
+
+    const message = await prisma.contactMessage.findUnique({ where: { id: req.params.id } });
+    if (!message) return fail(res, 404, "NOT_FOUND", "Message not found");
+
+    const subject = /^re:\s*/i.test(message.subject) ? message.subject : `Re: ${message.subject}`;
+    await sendEmail({
+      to: message.email,
+      subject,
+      text: body,
+      replyTo: env.ADMIN_EMAIL,
+    });
+
+    const [reply] = await prisma.$transaction([
+      prisma.contactMessageReply.create({
+        data: { contactMessageId: message.id, body },
+      }),
+      prisma.contactMessage.update({
+        where: { id: message.id },
+        data: { status: "REPLIED" },
+      }),
+    ]);
+
+    return ok(res, reply);
   } catch (e) { next(e); }
 });
 

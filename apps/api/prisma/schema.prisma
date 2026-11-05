@@ -53,6 +53,7 @@ model Profile {
   location   String   @default("Rwanda")
   whatsapp   String   @default("+250790382205")
   mission    String   @default("")
+  vision     String   @default("")
   philosophy String   @default("")
   updatedAt  DateTime @updatedAt
 }
@@ -174,7 +175,16 @@ model ContactMessage {
   ipHash    String?
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-  @@index([status, createdAt])
+  replies   ContactMessageReply[]
+}
+
+model ContactMessageReply {
+  id               String         @id @default(uuid())
+  contactMessageId String
+  contactMessage   ContactMessage @relation(fields: [contactMessageId], references: [id], onDelete: Cascade)
+  body             String
+  createdAt        DateTime       @default(now())
+  @@index([contactMessageId, createdAt])
 }
 
 model ServiceInquiry {
@@ -186,6 +196,7 @@ model ServiceInquiry {
   serviceId String
   service   Service       @relation(fields: [serviceId], references: [id])
   createdAt DateTime      @default(now())
+  @@index([status, createdAt])
   @@index([serviceId, status])
 }
 
@@ -227,6 +238,30 @@ model BlogPostTag {
   post   BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
   tag    BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
   @@id([postId, tagId])
+}
+
+enum MediaType {
+  NEWS
+  PROJECT
+  VIDEO
+  AUDIO
+  DOCUMENT
+  OTHER
+}
+
+model MediaItem {
+  id           String    @id @default(uuid())
+  title        String
+  description  String?
+  type         MediaType
+  url          String
+  originalName String
+  mimeType     String
+  size         Int
+  published    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  @@index([published, type, createdAt])
 }
 
 model SiteSetting {
@@ -279,6 +314,7 @@ model AuditLog {
 model EmailNotification {
   id        String   @id @default(uuid())
   to        String
+  replyTo   String?
   subject   String
   body      String
   status    String   @default("PENDING")

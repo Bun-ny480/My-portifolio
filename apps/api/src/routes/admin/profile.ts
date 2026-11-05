@@ -18,6 +18,7 @@ const profileUpdateSchema = z.object({
   location: z.string().max(120).optional(),
   whatsapp: z.string().max(30).optional(),
   mission: z.string().max(2000).optional(),
+  vision: z.string().max(2000).optional(),
   philosophy: z.string().max(2000).optional(),
 });
 

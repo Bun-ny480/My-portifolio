@@ -7,6 +7,7 @@ const envSchema = z.object({
   WEB_URL: z.string().url(),
   CORS_ORIGINS: z.string().transform((s) => s.split(",").map((x) => x.trim())),
   DATABASE_URL: z.string(),
+  ADMIN_EMAIL: z.string().email().default("dieuaime480@gmail.com"),
   SESSION_SECRET: z.string().min(32),
   CSRF_SECRET: z.string().min(16),
   COOKIE_DOMAIN: z.string().default("localhost"),

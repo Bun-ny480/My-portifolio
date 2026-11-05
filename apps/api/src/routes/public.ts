@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type { Prisma } from "@prisma/client";
 import rateLimit from "express-rate-limit";
 import { contactSchema } from "@portfolio/shared";
+import { env } from "../config/env.js";
 import { prisma } from "../config/prisma.js";
 import { ok, created, fail } from "../utils/http.js";
 
@@ -156,6 +157,21 @@ publicRouter.get("/blog/:slug", async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+/* ---------- public media library ---------- */
+publicRouter.get("/media", async (_req, res, next) => {
+  try {
+    const items = await prisma.mediaItem.findMany({
+      where: { published: true },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true, title: true, description: true, type: true,
+        url: true, originalName: true, mimeType: true, size: true, createdAt: true,
+      },
+    });
+    ok(res, items);
+  } catch (error) { next(error); }
+});
+
 /* ---------- experience / education / certifications ---------- */
 publicRouter.get("/experience", async (_req, res, next) => {
   try { ok(res, await prisma.experience.findMany({ orderBy: { order: "asc" } })); }
@@ -220,9 +236,10 @@ publicRouter.post("/contact", contactLimiter, async (req, res, next) => {
     // Queue notification (worker in jobs/ will send it)
     await prisma.emailNotification.create({
       data: {
-        to: process.env.ADMIN_EMAIL ?? "dieuaime480@gmail.com",
+        to: env.ADMIN_EMAIL,
         subject: `New contact: ${data.subject}`,
         body: `From ${data.fullName} <${data.email}>\n\n${data.message}`,
+        replyTo: data.email,
       },
     });
 
